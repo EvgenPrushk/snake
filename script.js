@@ -1,24 +1,61 @@
+const ROWS = 10;
+const COLUMNS = 10;
+const COOLDOWN = 250;
+
+const CELL_SIZE = 50;
+const CELL_MARGIN = 3;
+const GAME_PADING = 10;
+
+const FOOD_COLOR = 'green';
+const SNAKE_COLOR = 'gray';
+const FREE_COLOR =  'rgb(240, 240, 240)';
+
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
 
-canvas.width = 500;
-canvas.height = 500;
-const param = {
-    x: 10,
-    y: 10,
-    width: 50,
-    height: 50,
-    fillColor: 'red',
-};
+canvas.width = CELL_SIZE * COLUMNS + (COLUMNS - 1) * CELL_MARGIN + 2 * GAME_PADING;
+canvas.height = CELL_SIZE * ROWS + (ROWS - 1) * CELL_MARGIN + 2 * GAME_PADING;
+
+
+const map = createGameMap(COLUMNS, ROWS);
+
+getRandomFreeCell(map).food = true;
+
+const snake = [getRandomFreeCell(map)];
+snake[0].snake = true;
+
+let snakeDirect = 'right';
 
 requestAnimationFrame(loop);
 
+let prevTick = 0;
+
 function loop (timestamp) {
     requestAnimationFrame(loop);
+
     clearCanvas();
 
-    param.x += 1;
-    param.y += 1;
+    if (prevTick + COOLDOWN <= timestamp) {
+        moveSnake();
+        prevTick = timestamp;
+    }
 
-    drawRect(param);    
+    drawGameMap(map); 
 }
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === "ArrowUp") {
+        snakeDirect = "up";
+    }
+
+    else if (event.key === "ArrowDown") {
+        snakeDirect = "down";
+    }
+    else if (event.key === "ArrowLeft") {
+        snakeDirect = "left";
+    }
+    else if (event.key === "ArrowRight") {
+        snakeDirect = "right";
+    }
+    
+} );
