@@ -1,6 +1,7 @@
 const ROWS = 10;
 const COLUMNS = 10;
-const COOLDOWN = 250;
+const START_COOLDOWN = 250;
+const LEVEL_COOLDOWN = 5;
 
 const CELL_SIZE = 50;
 const CELL_MARGIN = 3;
@@ -8,7 +9,7 @@ const GAME_PADING = 10;
 
 const FOOD_COLOR = 'green';
 const SNAKE_COLOR = 'gray';
-const FREE_COLOR =  'rgb(240, 240, 240)';
+const FREE_COLOR = 'rgb(240, 240, 240)';
 
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
@@ -17,45 +18,96 @@ canvas.width = CELL_SIZE * COLUMNS + (COLUMNS - 1) * CELL_MARGIN + 2 * GAME_PADI
 canvas.height = CELL_SIZE * ROWS + (ROWS - 1) * CELL_MARGIN + 2 * GAME_PADING;
 
 
-const map = createGameMap(COLUMNS, ROWS);
+let map = createGameMap(COLUMNS, ROWS);
 
 getRandomFreeCell(map).food = true;
 
-const snake = [getRandomFreeCell(map)];
-snake[0].snake = true;
+const cell = getRandomFreeCell(map);
 
-let snakeDirect = 'right';
+let snake = [cell];
+
+cell.snake = true;
+
+let snakeDirect = 'up';
+let nextSnakeDirect = 'up'; // Используется для очень быстрого нажания клавиш вниз и влево,
+// что игра не заканчивалась (залипание клавиатуры)
 
 requestAnimationFrame(loop);
 
 let prevTick = 0;
+let play = true;
+let cooldown = START_COOLDOWN;
 
-function loop (timestamp) {
+
+function loop(timestamp) {
     requestAnimationFrame(loop);
 
     clearCanvas();
 
-    if (prevTick + COOLDOWN <= timestamp) {
-        moveSnake();
+    if (prevTick + cooldown <= timestamp && play) {
         prevTick = timestamp;
-    }
 
-    drawGameMap(map); 
+        snakeDirect = nextSnakeDirect;
+        moveSnake();
+
+        const head = snake[0];
+        const tail = snake[length - 1];
+
+        if (head.food) {
+            head.food = false;
+            snake.push(tail);
+
+            getRandomFreeCell(map).food = true;
+            cooldown -= LEVEL_COOLDOWN;
+        }
+
+
+        else{
+            let isEnd = false;
+        for (let i = 1; i < snake.length; i++) {
+            if (snake[i] === snake[0]) {
+                isEnd = true;
+                break;
+            }
+        }
+
+        if (isEnd) {           
+            play = false;
+        }
+        }
+    }
+  
+    drawGameMap(map);
+    showState();
+    if (!play) {
+        drawPause();
+    }
+   
 }
 
 document.addEventListener('keydown', function (event) {
     if (event.key === "ArrowUp") {
-        snakeDirect = "up";
+        if (snake.length === 1 || snakeDirect === "left" || snakeDirect === "right") {
+            nextSnakeDirect = "up";
+        }
+    } else if (event.key === "ArrowDown") {
+        if (snake.length === 1 || snakeDirect === "left" || snakeDirect === "right") {
+            nextSnakeDirect = "down";
+        }
+    } else if (event.key === "ArrowLeft") {
+        if (snake.length === 1 || snakeDirect === "up" || snakeDirect === "down") {
+            nextSnakeDirect = "left";
+        }
+    } else if (event.key === "ArrowRight") {
+        if (snake.length === 1 || snakeDirect === "up" || snakeDirect === "down") {
+            nextSnakeDirect = "right";
+        }
+    } else if (event.key === 'Enter') {
+        if (play) {
+            return;
+        }
+
+        init();
     }
 
-    else if (event.key === "ArrowDown") {
-        snakeDirect = "down";
-    }
-    else if (event.key === "ArrowLeft") {
-        snakeDirect = "left";
-    }
-    else if (event.key === "ArrowRight") {
-        snakeDirect = "right";
-    }
-    
-} );
+});
