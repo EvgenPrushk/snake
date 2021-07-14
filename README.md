@@ -6,4 +6,3 @@
 
 [Ссылка на выполненное задание](https://evgenprushk.github.io/snake/)
 
-Пишем игру snake на чистом JavaScript
